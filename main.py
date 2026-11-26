@@ -1,24 +1,38 @@
 #!/usr/bin/env python3
 """Your Week in One Line — make.fun bounty entry.
 
-Writes one line summing up the week to /output/entry.txt: the win, the fail and the chaos, in under 100 characters.
+Writes one line summing up the week to /output/entry.txt: the win, the fail and the chaos, in under 100 characters. No second line, no trailing space.
 """
 
 import os
+import sys
 
 ENTRY = 'Shipped three fixes, broke one thing in prod, apologised once — the week still owes me a weekend.'
 
+MAX_CHARS = 100
 
-def main() -> None:
-    text = ENTRY
-    assert 1 <= len(text) <= 100, f"entry is {len(text)} chars, must be 1-100"
-    assert text.strip(), "entry must not be only whitespace"
-    assert "\n" not in text and "\r" not in text, "entry must be a single line"
-    assert text == text.strip(), "entry must not start or end with whitespace"
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
-    os.makedirs(out_dir, exist_ok=True)
-    with open(os.path.join(out_dir, "entry.txt"), "w", encoding="utf-8") as f:
-        f.write(text)
+
+def _fail(reason):
+    sys.exit(f"week line rejected: {reason}")
+
+
+def _check_week(text):
+    if not text.strip():
+        _fail("nothing to send: the week line is blank")
+    if len(text) > MAX_CHARS:
+        _fail("week line overshoots the hundred-character cap")
+    if "\n" in text or "\r" in text:
+        _fail("week line must stay on one line")
+    if text != text.strip():
+        _fail("week line has leading or trailing whitespace")
+
+
+def main():
+    _check_week(ENTRY)
+    target_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    os.makedirs(target_dir, exist_ok=True)
+    with open(os.path.join(target_dir, "entry.txt"), "w", encoding="utf-8") as handle:
+        handle.write(ENTRY)
 
 
 if __name__ == "__main__":
